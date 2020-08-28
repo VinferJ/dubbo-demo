@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+
+    <!--配置应用信息-->
+    <dubbo:application name="dubbo-provider" owner="vinfer" />
+
+    <!--配置监控中心-->
+    <dubbo:monitor protocol="registry" />
+
+    <!--<dubbo:annotation package="me.vinfer.learndubbo.service" />-->
+
+    <!--dubbo这个服务所要暴露的服务地址所对应的注册中心-->
+    <!--不使用注册中心，连接方式是点对点直连-->
+    <!--<dubbo:registry address="N/A"/>-->
+    <!--使用注册中心-->
+    <dubbo:registry address="zookeeper://122.51.9.156:2181" check="false"/>
+    <!--<dubbo:registry address="zookeeper://127.0.0.1:2181" check="false"/>-->
+
+    <!--配置当前服务发布所依赖的协议（通信规则）；webService、Thrift、Hessain、http-->
+    <dubbo:protocol name="dubbo" port="20882"/>
+
+    <!--loadbalance：配置负载均衡机制，可选值为：random，roundrobin，leastactive，constanthash默认为random，-->
+    <dubbo:service interface="me.vinfer.learndubbo.api.UserServiceApi"
+                   version="1.0.0"
+                   loadbalance="roundrobin"
+                   ref="providerService"/>
+
+    <!--为服务接口定义bean，即配置服务的实现，这里的id和ref是相对应的-->
+    <bean id="providerService" class="me.vinfer.learndubbo.service.ProviderApiImpl"></bean>
+
+    <!--通过version配置多版本！！ 此时消费者可以通过指定版本号引用指定版本的服务-->
+    <dubbo:service interface="me.vinfer.learndubbo.api.UserServiceApi"
+                   version="2.0.0"
+                   ref="providerService2"
+    />
+    <!--给新版本的服务指定bean-->
+    <bean id="providerService2" class="me.vinfer.learndubbo.service.ProviderApiVer2Impl"></bean>
+
+
+</beans>

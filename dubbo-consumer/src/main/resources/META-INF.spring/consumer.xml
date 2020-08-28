@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://code.alibabatech.com/schema/dubbo
+     http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+    <bean name="userService" class="me.vinfer.learndubbo.service.UserService" />
+
+    <!--当前项目在整个分布式架构里面的唯一名称，计算依赖关系的标签-->
+    <dubbo:application name="dubbo-consumer" owner="vinfer" />
+
+    <!--
+        该版本的dubbo使用在consumer中必须加该配置！！！，
+        客户端中的包扫描路径可以是任意的
+    -->
+    <dubbo:annotation package="me.vinfer.learndubbo.service" />
+
+    <!--配置监控中心-->
+    <dubbo:monitor protocol="registry" />
+
+    <!--dubbo这个服务所要暴露的服务地址所对应的注册中心-->
+    <!--不使用注册中心，连接方式是点对点直连-->
+    <!--<dubbo:registry address="N/A"/>-->
+    <!--使用注册中心-->
+    <dubbo:registry address="zookeeper://122.51.9.156:2181" check="false"/>
+
+
+    <!--timeout:服务引用的超时配置，当进行远程引用某提供者的服务时，超过设置的时间会直接抛异常，默认值是1000(ms)-->
+    <!--
+        retries:重试次数，不包含第一次，retries=n 时，最多尝试n+1次，0代表重试
+        并且重试时会优先调用其他机器的服务（如果配置了服务集群）（默认使用轮询机制做负载均衡）
+        对幂等方法或服务要设置重复次数，对非幂等方法或服务不要设置重试次数！！
+        幂等：方法不管运行多少次，最终都是一个效果（跟只执行一次的效果一样），
+             如数据库的查询，删除，和修改（单表），带同样参数调用的情况下，执行n次和执行1次都一样效果
+        非幂等：执行n次，每一次的效果都不一致
+               如果数据库的新增操作
+    -->
+    <!--
+        version:配置多版本，即对灰度发布功能的支持
+        当某个provider中对某个服务发布新版本时，可以为每个版本的服务设置版本号
+        当consumer也指定version后就会调用指定版本的服务
+        version="*" 随机调用某个版本的服务
+    -->
+    <!--stub 配置本地存根-->
+    <dubbo:reference interface="me.vinfer.learndubbo.api.UserServiceApi"
+                     timeout="5000"
+                     retries="3"
+                     version="1.0.0"
+                     stub="me.vinfer.learndubbo.stub.UserServiceApiStubImpl"
+                     id="providerService" >
+        <dubbo:method name="getAllUsers" timeout="3000" />
+    </dubbo:reference>
+
+    <!--
+        dubbo:reference配置的优先级大于dubbo:consumer
+        优先级：方法级最优先(dubbo:method)，接口次之(dubbo:reference)，全局(dubbo:consumer)再次之
+    -->
+
+    <!--配置所有消费者的规则：所有关闭所有服务的启动时的注册中心检测-->
+    <dubbo:consumer check="false"/>
+
+</beans>
